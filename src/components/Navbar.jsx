@@ -1,17 +1,17 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
+
 import {
   FiUploadCloud,
   FiUsers,
   FiPieChart,
   FiActivity,
-  FiUser,
   FiLogOut,
   FiSun,
   FiMoon,
-  FiChevronDown,
   FiMenu,
   FiX,
 } from "react-icons/fi";
+
 import { HiOutlineLightningBolt } from "react-icons/hi";
 
 /* SCREENS */
@@ -20,19 +20,21 @@ import CustomerConsumption from "./CustomerConsumption";
 import TariffDistribution from "./TariffDistribution";
 import DataSimulation from "./DataSimulation";
 
-export default function Navbar({ isDark, setIsDark }) {
-  const [isUserDropdownOpen, setIsUserDropdownOpen] =
-    useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] =
-    useState(false);
+export default function Navbar({
+  isDark,
+  setIsDark,
+}) {
+  const [isSidebarOpen, setIsSidebarOpen] =
+    useState(true);
 
-  const [userName, setUserName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] =
+    useState("");
+
+  const [userEmail, setUserEmail] =
+    useState("");
 
   const [activeComponent, setActiveComponent] =
     useState("DataIngestion");
-
-  const dropdownRef = useRef(null);
 
   const navItems = [
     {
@@ -60,34 +62,13 @@ export default function Navbar({ isDark, setIsDark }) {
   useEffect(() => {
     setUserName(
       localStorage.getItem("userName") ||
-        "Guest User"
+        "John Doe"
     );
+
     setUserEmail(
       localStorage.getItem("userEmail") ||
-        "user@email.com"
+        "john@company.com"
     );
-  }, []);
-
-  useEffect(() => {
-    const closeMenus = (e) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target)
-      ) {
-        setIsUserDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener(
-      "mousedown",
-      closeMenus
-    );
-
-    return () =>
-      document.removeEventListener(
-        "mousedown",
-        closeMenus
-      );
   }, []);
 
   const toggleTheme = () =>
@@ -98,14 +79,13 @@ export default function Navbar({ isDark, setIsDark }) {
     window.location.href = "/";
   };
 
-  const changeScreen = (screen) => {
-    setActiveComponent(screen);
-    setIsMobileMenuOpen(false);
-  };
-
   const renderComponent = () => {
-    if (activeComponent === "DataIngestion")
-      return <DataIngestion isDark={isDark} />;
+    if (
+      activeComponent === "DataIngestion"
+    )
+      return (
+        <DataIngestion isDark={isDark} />
+      );
 
     if (
       activeComponent ===
@@ -128,206 +108,233 @@ export default function Navbar({ isDark, setIsDark }) {
       );
 
     if (
-      activeComponent === "DataSimulation"
+      activeComponent ===
+      "DataSimulation"
     )
       return (
         <DataSimulation isDark={isDark} />
       );
 
-    return <DataIngestion isDark={isDark} />;
+    return (
+      <DataIngestion isDark={isDark} />
+    );
   };
 
   return (
     <div
-      className={`min-h-screen ${
+      className={`flex min-h-screen overflow-hidden ${
         isDark
-          ? "bg-slate-950 text-white"
-          : "bg-slate-50 text-slate-900"
+          ? "bg-[#050816] text-white"
+          : "bg-slate-100 text-slate-900"
       }`}
     >
-      {/* NAVBAR */}
-      <nav
-        className={`sticky top-0 z-50 border-b backdrop-blur-xl ${
+      {/* SIDEBAR */}
+      <aside
+        className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 border-r ${
+          isSidebarOpen
+            ? "w-[240px]"
+            : "w-[78px]"
+        } ${
           isDark
-            ? "bg-slate-950/80 border-white/10"
-            : "bg-white/80 border-slate-200"
+            ? "bg-[#070B1D] border-white/10"
+            : "bg-white border-slate-200"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-          <div className="h-[70px] flex items-center justify-between gap-3">
-            {/* Logo */}
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center text-white shrink-0">
-                <HiOutlineLightningBolt size={18} />
+        <div className="flex flex-col h-full">
+          {/* LOGO */}
+          <div
+            className={`h-[72px] flex items-center px-5 border-b ${
+              isDark
+                ? "border-white/10"
+                : "border-slate-200"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center text-white">
+                <HiOutlineLightningBolt
+                  size={18}
+                />
               </div>
 
-              <div className="hidden sm:block">
-                <h1 className="text-lg md:text-xl font-black leading-none">
-                  Smart
-                  <span className="text-cyan-400">
-                    App
-                  </span>
-                </h1>
-                <p className="text-[9px] uppercase tracking-[0.28em] text-slate-400 mt-1">
-                  analytics suite
-                </p>
-              </div>
-            </div>
+              {isSidebarOpen && (
+                <div>
+                  <h1 className="text-lg font-black">
+                    Smart
+                    <span className="text-cyan-400">
+                      App
+                    </span>
+                  </h1>
 
-            {/* Desktop Nav */}
-            <div className="hidden lg:flex items-center gap-1 px-2 py-1 rounded-2xl border bg-white/5 border-white/10">
-              {navItems.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() =>
-                    changeScreen(
-                      item.component
-                    )
-                  }
-                  className={`relative group flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${
-                    activeComponent ===
-                    item.component
-                      ? "text-cyan-400"
-                      : "text-slate-300 hover:text-white"
-                  }`}
-                >
-                  {item.icon}
-                  {item.label}
-
-                  <span
-                    className={`absolute left-3 right-3 -bottom-[2px] h-[2px] rounded-full transition-all duration-300 ${
-                      activeComponent ===
-                      item.component
-                        ? "scale-x-100 bg-gradient-to-r from-cyan-400 to-purple-500"
-                        : "scale-x-0 group-hover:scale-x-100 bg-gradient-to-r from-cyan-400 to-purple-500"
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Right */}
-            <div className="flex items-center gap-2">
-              {/* Theme */}
-              <button
-                onClick={toggleTheme}
-                className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center"
-              >
-                {isDark ? (
-                  <FiSun />
-                ) : (
-                  <FiMoon />
-                )}
-              </button>
-
-              {/* User */}
-              <div
-                className="relative hidden sm:block"
-                ref={dropdownRef}
-              >
-                <button
-                  onClick={() =>
-                    setIsUserDropdownOpen(
-                      !isUserDropdownOpen
-                    )
-                  }
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-2xl border bg-white/5 border-white/10"
-                >
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center text-white">
-                    {userName
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
-
-                  <div className="hidden md:block text-left">
-                    <p className="text-sm font-semibold">
-                      {userName}
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      Workspace
-                    </p>
-                  </div>
-
-                  <FiChevronDown />
-                </button>
-
-                {isUserDropdownOpen && (
-                  <div className="absolute right-0 mt-3 w-56 rounded-2xl bg-slate-900 border border-white/10 p-2 shadow-2xl">
-                    <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-sm">
-                      <FiUser />
-                      Profile
-                    </button>
-
-                    <button
-                      onClick={
-                        handleLogout
-                      }
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-red-500 text-white text-sm mt-1"
-                    >
-                      <FiLogOut />
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() =>
-                  setIsMobileMenuOpen(
-                    !isMobileMenuOpen
-                  )
-                }
-                className="lg:hidden w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center"
-              >
-                {isMobileMenuOpen ? (
-                  <FiX />
-                ) : (
-                  <FiMenu />
-                )}
-              </button>
+                  <p className="text-[9px] uppercase tracking-[0.28em] text-slate-500">
+                    analytics suite
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Mobile Nav */}
-          {isMobileMenuOpen && (
-            <div className="lg:hidden pb-4 space-y-2 pt-2">
-              {navItems.map((item) => (
+          {/* NAV ITEMS */}
+          <nav className="flex-1 px-3 py-5 space-y-1">
+            {navItems.map((item) => {
+              const active =
+                activeComponent ===
+                item.component;
+
+              return (
                 <button
                   key={item.label}
                   onClick={() =>
-                    changeScreen(
+                    setActiveComponent(
                       item.component
                     )
                   }
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${
-                    activeComponent ===
-                    item.component
-                      ? "bg-cyan-500/15 text-cyan-400"
-                      : "bg-white/5"
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
+                    active
+                      ? "bg-gradient-to-r from-cyan-500/20 to-indigo-600/20 text-cyan-400 border border-cyan-500/20"
+                      : isDark
+                      ? "text-slate-400 hover:bg-white/5 hover:text-white"
+                      : "text-slate-600 hover:bg-slate-100"
                   }`}
                 >
-                  {item.icon}
-                  {item.label}
+                  <span className="text-lg">
+                    {item.icon}
+                  </span>
+
+                  {isSidebarOpen && (
+                    <span>{item.label}</span>
+                  )}
                 </button>
-              ))}
+              );
+            })}
+          </nav>
 
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500 text-white text-sm"
-              >
-                <FiLogOut />
-                Logout
-              </button>
-            </div>
-          )}
+          {/* FOOTER */}
+          <div
+            className={`p-3 border-t ${
+              isDark
+                ? "border-white/10"
+                : "border-slate-200"
+            }`}
+          >
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white transition-all"
+            >
+              <FiLogOut />
+
+              {isSidebarOpen && (
+                <span>Logout</span>
+              )}
+            </button>
+          </div>
         </div>
-      </nav>
+      </aside>
 
-      {/* Page Content */}
-      <main className="p-2 sm:p-4 md:p-5">
-        {renderComponent()}
-      </main>
+      {/* MAIN */}
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ${
+          isSidebarOpen
+            ? "ml-[240px]"
+            : "ml-[78px]"
+        }`}
+      >
+        {/* HEADER */}
+        <header
+          className={`sticky top-0 z-30 h-[72px] px-6 border-b flex items-center justify-between ${
+            isDark
+              ? "bg-[#050816]/90 border-white/10"
+              : "bg-white border-slate-200"
+          }`}
+        >
+          {/* LEFT */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() =>
+                setIsSidebarOpen(
+                  !isSidebarOpen
+                )
+              }
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+                isDark
+                  ? "bg-white/5 border border-white/10"
+                  : "bg-slate-100"
+              }`}
+            >
+              {isSidebarOpen ? (
+                <FiX />
+              ) : (
+                <FiMenu />
+              )}
+            </button>
+
+            <div>
+              <h2 className="text-lg font-bold">
+                {
+                  navItems.find(
+                    (n) =>
+                      n.component ===
+                      activeComponent
+                  )?.label
+                }
+              </h2>
+
+              <p className="text-xs text-slate-500">
+                Enterprise Analytics
+                Dashboard
+              </p>
+            </div>
+          </div>
+
+          {/* RIGHT */}
+          <div className="flex items-center gap-4">
+            {/* THEME */}
+            <button
+              onClick={toggleTheme}
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center ${
+                isDark
+                  ? "bg-white/5 border border-white/10"
+                  : "bg-slate-100"
+              }`}
+            >
+              {isDark ? (
+                <FiSun className="text-yellow-400" />
+              ) : (
+                <FiMoon />
+              )}
+            </button>
+
+            {/* USER */}
+            <div
+              className={`flex items-center gap-3 px-3 py-2 rounded-2xl ${
+                isDark
+                  ? "bg-white/5 border border-white/10"
+                  : "bg-white border border-slate-200"
+              }`}
+            >
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                {userName
+                  ?.charAt(0)
+                  ?.toUpperCase()}
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold">
+                  {userName}
+                </p>
+
+                <p className="text-xs text-slate-500">
+                  Data Engineer
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* PAGE */}
+        <main className="flex-1 overflow-y-auto p-5">
+          {renderComponent()}
+        </main>
+      </div>
     </div>
   );
 }

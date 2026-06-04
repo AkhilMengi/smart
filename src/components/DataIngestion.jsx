@@ -1,297 +1,605 @@
 import { useState } from "react";
+
 import {
-  FiUploadCloud,
   FiCheckCircle,
-  FiXCircle,
-  FiFileText,
   FiLoader,
+  FiUploadCloud,
+  FiUsers,
+  FiActivity,
+  FiDatabase,
+  FiClock,
+  FiFileText,
+  FiCloud,
+  FiLayers,
 } from "react-icons/fi";
 
-export default function DataIngestion({ isDark = true }) {
-  const [dragging, setDragging] = useState(false);
-  const [files, setFiles] = useState([]);
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState("Waiting for file upload...");
+export default function DataIngestion({
+  isDark,
+}) {
+  const [progress, setProgress] =
+    useState(0);
 
-  const startPipeline = (uploadedFiles) => {
-    setProgress(0);
-    setStatus("Initializing ingestion engine...");
+  const [status, setStatus] = useState(
+    "Waiting for upload..."
+  );
 
+  const startPipeline = () => {
     let value = 0;
 
     const timer = setInterval(() => {
-      value += 7;
+      value += 10;
+
       setProgress(value);
 
-      if (value < 20) setStatus("Reading file metadata...");
-      else if (value < 45) setStatus("Validating schema...");
-      else if (value < 70) setStatus("Transforming records...");
-      else if (value < 95) setStatus("Writing to warehouse...");
-      else setStatus("Finalizing pipeline...");
+      if (value < 20)
+        setStatus("Reading files...");
+      else if (value < 40)
+        setStatus("Validating...");
+      else if (value < 60)
+        setStatus("Transforming...");
+      else if (value < 90)
+        setStatus("Loading warehouse...");
+      else setStatus("Finalizing...");
 
       if (value >= 100) {
         clearInterval(timer);
 
-        const updated = uploadedFiles.map((file) => ({
-          ...file,
-          status:
-            Math.random() > 0.12 ? "Success" : "Failed",
-        }));
-
-        setFiles(updated);
-
-        const hasFailed = updated.some(
-          (x) => x.status === "Failed"
-        );
-
         setStatus(
-          hasFailed
-            ? "Completed with partial failures"
-            : "Ingestion completed successfully"
+          "Pipeline completed successfully"
         );
       }
-    }, 320);
-  };
-
-  const onFiles = (list) => {
-    const arr = Array.from(list || []).map((f, i) => ({
-      id: i + Date.now(),
-      name: f.name,
-      size:
-        (f.size / 1024 / 1024).toFixed(2) + " MB",
-      status: "Pending",
-    }));
-
-    setFiles(arr);
-    startPipeline(arr);
+    }, 400);
   };
 
   return (
-    <div
-      className={`min-h-screen p-8 ${
-        isDark
-          ? "bg-slate-950 text-white"
-          : "bg-slate-50 text-slate-900"
-      }`}
-    >
-      {/* Glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-10 left-10 w-80 h-80 bg-cyan-500/10 blur-3xl rounded-full"></div>
-        <div className="absolute bottom-10 right-10 w-80 h-80 bg-purple-500/10 blur-3xl rounded-full"></div>
-      </div>
+    <div className="space-y-2.5">
+      {/* HERO */}
+      <div
+        className={`relative overflow-hidden rounded-xl border px-4 py-3 ${
+          isDark
+            ? "bg-[#0B1120] border-white/5"
+            : "bg-white border-slate-200"
+        }`}
+      >
+        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-3xl rounded-full"></div>
 
-      <div className="relative max-w-6xl mx-auto space-y-7">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="relative z-10 flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-4xl font-black tracking-tight">
-              Data Ingestion
+            <h1 className="text-xl font-bold tracking-tight">
+              Nexus Ingestion
             </h1>
+
             <p
-              className={`mt-2 text-sm ${
+              className={`mt-1 text-[11px] ${
                 isDark
                   ? "text-slate-400"
                   : "text-slate-600"
               }`}
             >
-              Securely upload, validate and ingest data
-              into enterprise systems
+              Enterprise ingestion and
+              validation pipeline
             </p>
           </div>
 
-          <div className="px-4 py-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-sm font-semibold">
-            ● System Healthy
+          <div className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
+            ● Operational
           </div>
         </div>
+      </div>
 
-        {/* Upload + Progress */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Upload */}
+      {/* KPI */}
+      <div className="grid grid-cols-2 xl:grid-cols-5 gap-2">
+        {[
+          {
+            label: "Customers",
+            value: "2.34M",
+            sub: "Portfolio",
+            icon: <FiUsers />,
+            color: "text-cyan-400",
+            bg: "bg-cyan-500/10",
+          },
+          {
+            label: "Smart Meters",
+            value: "91%",
+            sub: "Coverage",
+            icon: <FiActivity />,
+            color: "text-indigo-400",
+            bg: "bg-indigo-500/10",
+          },
+          {
+            label: "Completeness",
+            value: "96%",
+            sub: "Validated",
+            icon: <FiCheckCircle />,
+            color:
+              "text-emerald-400",
+            bg:
+              "bg-emerald-500/10",
+          },
+          {
+            label: "Coverage",
+            value: "24M",
+            sub: "Months",
+            icon: <FiDatabase />,
+            color: "text-violet-400",
+            bg:
+              "bg-violet-500/10",
+          },
+          {
+            label: "Last Load",
+            value: "14 May",
+            sub: "2h ago",
+            icon: <FiClock />,
+            color:
+              "text-orange-400",
+            bg:
+              "bg-orange-500/10",
+          },
+        ].map((card, i) => (
           <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragging(false);
-              onFiles(e.dataTransfer.files);
-            }}
-            className={`rounded-3xl border-2 border-dashed p-10 text-center transition-all duration-300 backdrop-blur-xl ${
-              dragging
-                ? "border-cyan-400 scale-[1.02] shadow-2xl shadow-cyan-500/20"
-                : isDark
-                ? "border-white/10 bg-white/5"
-                : "border-slate-300 bg-white"
-            }`}
-          >
-            <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-r from-cyan-500 to-purple-600 flex items-center justify-center text-white text-3xl shadow-xl mb-5">
-              <FiUploadCloud />
-            </div>
-
-            <h3 className="text-2xl font-bold">
-              Upload Source Files
-            </h3>
-
-            <p
-              className={`mt-2 text-sm ${
-                isDark
-                  ? "text-slate-400"
-                  : "text-slate-600"
-              }`}
-            >
-              CSV, Excel, JSON, XML • Max 2GB
-            </p>
-
-            <label className="inline-block mt-6 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold cursor-pointer hover:scale-105 transition-all shadow-lg">
-              Select Files
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) =>
-                  onFiles(e.target.files)
-                }
-              />
-            </label>
-          </div>
-
-          {/* Progress */}
-          <div
-            className={`rounded-3xl border p-7 backdrop-blur-xl ${
+            key={i}
+            className={`rounded-xl border px-3 py-2.5 transition-all ${
               isDark
-                ? "bg-white/5 border-white/10"
+                ? "bg-[#0B1120] border-white/5 hover:border-white/10"
                 : "bg-white border-slate-200"
             }`}
           >
-            <h3 className="text-xl font-bold mb-5">
-              Pipeline Status
-            </h3>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] uppercase tracking-wide text-slate-500">
+                  {card.label}
+                </p>
 
-            <div className="flex justify-between mb-2">
-              <span className="text-sm text-slate-400">
-                Current Progress
-              </span>
-              <span className="font-bold text-cyan-400">
-                {progress}%
-              </span>
-            </div>
+                <h3 className="mt-2 text-lg font-bold">
+                  {card.value}
+                </h3>
+              </div>
 
-            <div
-              className={`h-4 rounded-full overflow-hidden ${
-                isDark
-                  ? "bg-slate-800"
-                  : "bg-slate-200"
-              }`}
-            >
               <div
-                className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-purple-600 transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-
-            <div className="mt-4 flex items-center gap-2 text-sm">
-              {progress > 0 &&
-                progress < 100 && (
-                  <FiLoader className="animate-spin text-cyan-400" />
-                )}
-
-              <span
-                className={
-                  isDark
-                    ? "text-slate-400"
-                    : "text-slate-600"
-                }
+                className={`w-8 h-8 rounded-md flex items-center justify-center text-xs ${card.bg} ${card.color}`}
               >
-                {status}
-              </span>
+                {card.icon}
+              </div>
             </div>
 
-            <div className="mt-8 space-y-4">
+            <p className="mt-2 text-[10px] text-slate-500">
+              {card.sub}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* MAIN GRID */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-2.5">
+        {/* LEFT SIDE */}
+        <div className="space-y-2.5">
+          {/* DATA SOURCES */}
+          <div
+            className={`rounded-xl border p-3.5 ${
+              isDark
+                ? "bg-[#0B1120] border-white/5"
+                : "bg-white border-slate-200"
+            }`}
+          >
+            {/* HEADER */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-semibold">
+                  Data Sources
+                </h3>
+
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Enterprise datasets
+                </p>
+              </div>
+
+              <button
+                onClick={startPipeline}
+                className="px-3 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-indigo-600 text-white text-[11px] font-medium"
+              >
+                <span className="flex items-center gap-1.5">
+                  <FiUploadCloud />
+                  Upload
+                </span>
+              </button>
+            </div>
+
+            {/* LIST */}
+            <div className="space-y-1.5">
               {[
-                "Schema Validation",
-                "Transformation",
-                "Warehouse Load",
+                {
+                  title:
+                    "HH Consumption Data",
+                  records:
+                    "119.4M Records",
+                  icon: (
+                    <FiActivity />
+                  ),
+                  color:
+                    "text-cyan-400",
+                  bg:
+                    "bg-cyan-500/10",
+                },
+                {
+                  title:
+                    "Customer Master",
+                  records:
+                    "2.3M Records",
+                  icon: <FiUsers />,
+                  color:
+                    "text-indigo-400",
+                  bg:
+                    "bg-indigo-500/10",
+                },
+                {
+                  title: "Tariff Data",
+                  records:
+                    "145 Records",
+                  icon: (
+                    <FiFileText />
+                  ),
+                  color:
+                    "text-violet-400",
+                  bg:
+                    "bg-violet-500/10",
+                },
+                {
+                  title:
+                    "Wholesale Curves",
+                  records:
+                    "Scenario Base",
+                  icon: (
+                    <FiCloud />
+                  ),
+                  color:
+                    "text-orange-400",
+                  bg:
+                    "bg-orange-500/10",
+                },
+                {
+                  title:
+                    "Weather Data",
+                  records:
+                    "Historical Dataset",
+                  icon: (
+                    <FiLayers />
+                  ),
+                  color:
+                    "text-emerald-400",
+                  bg:
+                    "bg-emerald-500/10",
+                },
               ].map((item, i) => (
                 <div
                   key={i}
-                  className="flex justify-between text-sm"
+                  className={`rounded-lg border px-3 py-2.5 flex items-center justify-between ${
+                    isDark
+                      ? "bg-slate-900/30 border-white/5"
+                      : "bg-slate-50 border-slate-200"
+                  }`}
                 >
-                  <span>{item}</span>
-                  <span className="text-emerald-400">
-                    Ready
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-8 h-8 rounded-md flex items-center justify-center text-xs ${item.bg} ${item.color}`}
+                    >
+                      {item.icon}
+                    </div>
+
+                    <div>
+                      <h4 className="text-[13px] font-medium">
+                        {item.title}
+                      </h4>
+
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        {item.records}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-emerald-400">
+                      Ready
+                    </span>
+
+                    <FiCheckCircle className="text-emerald-400 text-[10px]" />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* PIPELINE */}
+          <div
+            className={`rounded-xl border p-4 ${
+              isDark
+                ? "bg-[#0B1120] border-white/5"
+                : "bg-white border-slate-200"
+            }`}
+          >
+            {/* HEADER */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold">
+                  Pipeline Validation
+                </h3>
+
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Real-time ingestion
+                  execution
+                </p>
+              </div>
+
+              <div className="text-right">
+                <p className="text-cyan-400 text-xl font-bold">
+                  {progress}%
+                </p>
+
+                <p className="text-[10px] text-slate-500">
+                  Progress
+                </p>
+              </div>
+            </div>
+
+            {/* BAR */}
+            <div className="mt-4 h-2 rounded-full bg-slate-800 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-500 to-indigo-600 transition-all duration-500"
+                style={{
+                  width: `${progress}%`,
+                }}
+              />
+            </div>
+
+            {/* STEPS */}
+            <div className="grid grid-cols-4 gap-3 mt-5">
+              {[
+                "Read Source",
+                "Validate",
+                "Transform",
+                "Warehouse Load",
+              ].map((step, i) => (
+                <div
+                  key={i}
+                  className={`rounded-lg p-3 border ${
+                    isDark
+                      ? "bg-slate-900/40 border-white/5"
+                      : "bg-slate-50 border-slate-200"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-slate-400">
+                      Step {i + 1}
+                    </p>
+
+                    <FiCheckCircle className="text-emerald-400 text-xs" />
+                  </div>
+
+                  <h4 className="mt-2 text-[12px] font-medium">
+                    {step}
+                  </h4>
+                </div>
+              ))}
+            </div>
+
+            {/* STATUS */}
+            <div className="mt-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {progress > 0 &&
+                  progress < 100 && (
+                    <FiLoader className="animate-spin text-cyan-400 text-[10px]" />
+                  )}
+
+                <span className="text-[11px] text-slate-400">
+                  {status}
+                </span>
+              </div>
+
+              <button
+                onClick={startPipeline}
+                className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-indigo-600 text-white text-[11px] font-medium"
+              >
+                Run Validation
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Files */}
-        <div
-          className={`rounded-3xl border p-7 backdrop-blur-xl ${
-            isDark
-              ? "bg-white/5 border-white/10"
-              : "bg-white border-slate-200"
-          }`}
-        >
-          <h3 className="text-xl font-bold mb-5">
-            Uploaded Files
-          </h3>
+        {/* RIGHT PANEL */}
+        <div className="space-y-2.5">
+          {/* METADATA */}
+          <div
+            className={`rounded-xl border p-3.5 ${
+              isDark
+                ? "bg-[#0B1120] border-white/5"
+                : "bg-white border-slate-200"
+            }`}
+          >
+            {/* HEADER */}
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-sm font-semibold">
+                  Detected Metadata
+                </h3>
 
-          <div className="space-y-3">
-            {files.length === 0 && (
-              <p className="text-sm text-slate-400">
-                No files uploaded yet.
-              </p>
-            )}
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Auto-detected schema
+                </p>
+              </div>
 
-            {files.map((file) => (
+              <div className="px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-400 text-[10px]">
+                18 Fields
+              </div>
+            </div>
+
+            {/* TABLE */}
+            <div className="overflow-hidden rounded-lg border border-white/5">
+              {/* HEADERS */}
               <div
-                key={file.id}
-                className={`flex items-center justify-between px-5 py-4 rounded-2xl transition ${
+                className={`grid grid-cols-[1.1fr_0.8fr_0.6fr] px-3 py-2 text-[9px] uppercase tracking-wide ${
                   isDark
-                    ? "bg-slate-900/70 hover:bg-slate-900"
-                    : "bg-slate-50 hover:bg-slate-100"
+                    ? "bg-white/[0.03] text-slate-500"
+                    : "bg-slate-100 text-slate-500"
                 }`}
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400">
-                    <FiFileText />
-                  </div>
-
-                  <div>
-                    <p className="font-semibold">
-                      {file.name}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {file.size}
-                    </p>
-                  </div>
-                </div>
-
-                {file.status === "Success" && (
-                  <span className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
-                    <FiCheckCircle />
-                    Success
-                  </span>
-                )}
-
-                {file.status === "Failed" && (
-                  <span className="flex items-center gap-2 text-red-400 font-semibold text-sm">
-                    <FiXCircle />
-                    Failed
-                  </span>
-                )}
-
-                {file.status === "Pending" && (
-                  <span className="text-yellow-400 text-sm">
-                    Pending
-                  </span>
-                )}
+                <span>Field</span>
+                <span>Type</span>
+                <span>Status</span>
               </div>
-            ))}
+
+              {/* SCROLL AREA */}
+              <div className="max-h-[240px] overflow-y-auto">
+                {[
+                  {
+                    field:
+                      "customer_id",
+                    type: "STRING",
+                  },
+                  {
+                    field: "meter_id",
+                    type: "STRING",
+                  },
+                  {
+                    field:
+                      "consumption_kwh",
+                    type: "FLOAT",
+                  },
+                  {
+                    field:
+                      "tariff_code",
+                    type: "STRING",
+                  },
+                  {
+                    field: "region",
+                    type: "STRING",
+                  },
+                  {
+                    field: "timestamp",
+                    type: "DATETIME",
+                  },
+                  {
+                    field:
+                      "feeder_id",
+                    type: "STRING",
+                  },
+                  {
+                    field:
+                      "transformer_id",
+                    type: "STRING",
+                  },
+                  {
+                    field:
+                      "utility_code",
+                    type: "STRING",
+                  },
+                  {
+                    field:
+                      "temperature",
+                    type: "FLOAT",
+                  },
+                  {
+                    field:
+                      "weather_zone",
+                    type: "STRING",
+                  },
+                  {
+                    field:
+                      "market_price",
+                    type: "FLOAT",
+                  },
+                ].map((item, i) => (
+                  <div
+                    key={i}
+                    className={`grid grid-cols-[1.1fr_0.8fr_0.6fr] px-3 py-2 text-[10px] border-t ${
+                      isDark
+                        ? "border-white/5 hover:bg-white/[0.02]"
+                        : "border-slate-200 hover:bg-slate-50"
+                    } transition-all`}
+                  >
+                    <span className="font-medium">
+                      {item.field}
+                    </span>
+
+                    <span className="text-slate-400">
+                      {item.type}
+                    </span>
+
+                    <span className="text-emerald-400">
+                      Valid
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* QUALITY */}
+          <div
+            className={`rounded-xl border p-3.5 ${
+              isDark
+                ? "bg-[#0B1120] border-white/5"
+                : "bg-white border-slate-200"
+            }`}
+          >
+            <h3 className="text-sm font-semibold">
+              Data Quality
+            </h3>
+
+            <p className="text-[11px] text-slate-500 mt-1">
+              Validation overview
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              {[
+                {
+                  label: "Missing",
+                  value: "1.2%",
+                },
+                {
+                  label: "Tariffs",
+                  value: "0.3%",
+                },
+                {
+                  label: "Duplicates",
+                  value: "0.1%",
+                },
+                {
+                  label: "Invalid",
+                  value: "0.2%",
+                },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className={`rounded-md p-2.5 ${
+                    isDark
+                      ? "bg-slate-900/40"
+                      : "bg-slate-100"
+                  }`}
+                >
+                  <p className="text-[9px] uppercase text-slate-500">
+                    {item.label}
+                  </p>
+
+                  <h4 className="text-base font-bold mt-1">
+                    {item.value}
+                  </h4>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 rounded-md bg-emerald-500/10 border border-emerald-500/20 p-2.5 flex items-start gap-2">
+              <FiCheckCircle className="text-emerald-400 text-xs mt-0.5" />
+
+              <div>
+                <p className="text-emerald-400 text-[11px] font-medium">
+                  Validation passed
+                </p>
+
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Ready for downstream
+                  analytics.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -1,781 +1,771 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
+
 import {
-  FiDollarSign,
   FiUsers,
   FiTrendingUp,
+  FiZap,
   FiCheckCircle,
-  FiFilter,
-  FiSearch,
-  FiChevronLeft,
-  FiChevronRight,
-  FiChevronUp,
-  FiChevronDown,
-  FiHome,
-  FiTool,
+  FiDownload,
+  FiArrowRight,
+  FiActivity,
+  FiTarget,
 } from "react-icons/fi";
 
 import {
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  XAxis,
-  YAxis,
-  CartesianGrid,
   LineChart,
   Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  AreaChart,
+  Area,
 } from "recharts";
 
-export default function TariffDistribution({
+export default function TariffRecommendation({
   isDark = true,
 }) {
   const card = isDark
-    ? "bg-white/5 border-white/10 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.22)]"
-    : "bg-white border-slate-200 shadow-sm";
+    ? `
+      bg-gradient-to-b
+      from-[#0F172A]
+      to-[#0B1120]
+      border-white/[0.06]
+      shadow-[0_0_0_1px_rgba(255,255,255,0.02)]
+      backdrop-blur-xl
+    `
+    : "bg-white border-slate-200";
 
-  const input =
-    isDark
-      ? "bg-slate-900/80 border-white/10 text-white"
-      : "bg-white border-slate-200 text-slate-900";
+  const input = isDark
+    ? "bg-slate-900 border-white/10 text-white"
+    : "bg-white border-slate-200";
 
-  const [search, setSearch] = useState("");
-  const [status, setStatus] =
-    useState("All Status");
-  const [segment, setSegment] =
-    useState("All");
+  const [portfolio, setPortfolio] =
+    useState(
+      "British Gas Residential"
+    );
 
-  const [tableType, setTableType] =
-    useState("Residential");
+  const loadData = [
+    {
+      time: "00",
+      before: 0.7,
+      after: 0.5,
+    },
 
-  const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] =
-    useState("name");
-  const [sortDir, setSortDir] =
-    useState("asc");
+    {
+      time: "04",
+      before: 0.6,
+      after: 0.4,
+    },
 
-  const perPage = 5;
+    {
+      time: "08",
+      before: 1.0,
+      after: 0.8,
+    },
 
-  const tariffs = [
     {
-      name: "Basic Saver",
-      rate: 0.09,
-      customers: 1240,
-      revenue: 84,
-      status: "Active",
-      type: "Residential",
+      time: "12",
+      before: 1.1,
+      after: 0.9,
     },
+
     {
-      name: "Night Saver",
-      rate: 0.07,
-      customers: 880,
-      revenue: 66,
-      status: "Pending",
-      type: "Residential",
+      time: "16",
+      before: 1.2,
+      after: 1.0,
     },
+
     {
-      name: "Green Energy",
-      rate: 0.14,
-      customers: 930,
-      revenue: 92,
-      status: "Active",
-      type: "Residential",
-    },
-    {
-      name: "Standard Plus",
-      rate: 0.12,
-      customers: 2810,
-      revenue: 214,
-      status: "Active",
-      type: "Commercial",
-    },
-    {
-      name: "Premium Flex",
-      rate: 0.16,
-      customers: 1620,
-      revenue: 188,
-      status: "Active",
-      type: "Commercial",
-    },
-    {
-      name: "SME Growth",
-      rate: 0.11,
-      customers: 760,
-      revenue: 58,
-      status: "Pending",
-      type: "Commercial",
-    },
-    {
-      name: "Industrial Core",
-      rate: 0.08,
-      customers: 420,
-      revenue: 121,
-      status: "Active",
-      type: "Industrial",
-    },
-    {
-      name: "Enterprise Max",
-      rate: 0.19,
-      customers: 260,
-      revenue: 174,
-      status: "Active",
-      type: "Industrial",
+      time: "20",
+      before: 1.7,
+      after: 1.1,
     },
   ];
 
-  const filteredTariffs = useMemo(() => {
-    let data = tariffs.filter((item) => {
-      const s = item.name
-        .toLowerCase()
-        .includes(search.toLowerCase());
-
-      const st =
-        status === "All Status"
-          ? true
-          : item.status === status;
-
-      const seg =
-        segment === "All"
-          ? true
-          : item.type === segment;
-
-      return s && st && seg;
-    });
-
-    data.sort((a, b) => {
-      let A = a[sortBy];
-      let B = b[sortBy];
-
-      if (typeof A === "string") {
-        A = A.toLowerCase();
-        B = B.toLowerCase();
-      }
-
-      if (A < B)
-        return sortDir === "asc"
-          ? -1
-          : 1;
-
-      if (A > B)
-        return sortDir === "asc"
-          ? 1
-          : -1;
-
-      return 0;
-    });
-
-    return data;
-  }, [
-    search,
-    status,
-    segment,
-    sortBy,
-    sortDir,
-  ]);
-
-  const chartData = filteredTariffs;
-
-  const tableFiltered = filteredTariffs.filter(
-    (item) => item.type === tableType
-  );
-
-  const totalPages =
-    Math.ceil(
-      tableFiltered.length / perPage
-    ) || 1;
-
-  const paginatedData =
-    tableFiltered.slice(
-      (page - 1) * perPage,
-      page * perPage
-    );
-
-  const totalRevenue =
-    filteredTariffs.reduce(
-      (a, b) => a + b.revenue,
-      0
-    );
-
-  const totalCustomers =
-    filteredTariffs.reduce(
-      (a, b) => a + b.customers,
-      0
-    );
-
-  const pieData = filteredTariffs.map(
-    (item, i) => ({
-      name: item.name,
-      value: item.customers,
-      color: [
-        "#06b6d4",
-        "#8b5cf6",
-        "#10b981",
-        "#f59e0b",
-        "#ef4444",
-        "#14b8a6",
-        "#6366f1",
-        "#ec4899",
-      ][i % 8],
-    })
-  );
-
-  const totalPie =
-    pieData.reduce(
-      (a, b) => a + b.value,
-      0
-    ) || 1;
-
-  const sortColumn = (col) => {
-    if (sortBy === col) {
-      setSortDir(
-        sortDir === "asc"
-          ? "desc"
-          : "asc"
+  const tooltip = ({
+    active,
+    payload,
+  }) => {
+    if (
+      active &&
+      payload &&
+      payload.length
+    ) {
+      return (
+        <div
+          className={`px-3 py-2 rounded-xl border text-xs ${
+            isDark
+              ? "bg-slate-900 border-white/10 text-white"
+              : "bg-white border-slate-200"
+          }`}
+        >
+          {payload[0].value}
+        </div>
       );
-    } else {
-      setSortBy(col);
-      setSortDir("asc");
     }
-  };
 
-  const SortIcon = ({ col }) =>
-    sortBy === col ? (
-      sortDir === "asc" ? (
-        <FiChevronUp />
-      ) : (
-        <FiChevronDown />
-      )
-    ) : (
-      <FiChevronDown className="opacity-30" />
-    );
+    return null;
+  };
 
   return (
     <div
-      className={`min-h-screen p-4 sm:p-6 ${isDark
-          ? "bg-slate-950 text-white"
+      className={`min-h-screen p-4 ${
+        isDark
+          ? "bg-[#060B14] bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.06),transparent_22%)] text-white"
           : "bg-slate-50 text-slate-900"
-        }`}
+      }`}
     >
-      <div className="max-w-7xl mx-auto space-y-5">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-black">
-            Tariff Distribution
-          </h1>
-          <p className="text-xs mt-1 text-slate-400">
-            Dynamic tariff plans &
-            customer distribution
-          </p>
-        </div>
+      <div className="max-w-7xl mx-auto space-y-4">
+        {/* HEADER */}
 
-        {/* Filters */}
-        <div
-          className={`rounded-3xl border p-4 grid md:grid-cols-4 gap-3 ${card}`}
-        >
-          <div className="flex items-center gap-2 text-cyan-400 text-sm font-semibold">
-            <FiFilter />
-            Filters
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Tariff Recommendation
+            </h1>
+
+            <p className="text-[11px] text-slate-400 mt-1">
+              Intelligent tariff optimisation and customer recommendation engine
+            </p>
           </div>
 
-          <div
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${input}`}
-          >
-            <FiSearch className="text-slate-400" />
-            <input
-              value={search}
+          <div className="flex items-center gap-3">
+            <select
+              value={portfolio}
               onChange={(e) =>
-                setSearch(
+                setPortfolio(
                   e.target.value
                 )
               }
-              placeholder="Search tariff..."
-              className="bg-transparent outline-none text-sm w-full"
-            />
+              className={`px-3 py-2 rounded-xl text-xs border outline-none ${input}`}
+            >
+              <option>
+                British Gas Residential
+              </option>
+
+              <option>
+                Commercial Portfolio
+              </option>
+            </select>
+
+            <button className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 transition-all text-white text-xs font-medium flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+              <FiDownload size={13} />
+              Export
+            </button>
           </div>
-
-          <select
-            value={status}
-            onChange={(e) =>
-              setStatus(
-                e.target.value
-              )
-            }
-            className={`px-3 py-2 rounded-xl border ${input}`}
-          >
-            <option>
-              All Status
-            </option>
-            <option>Active</option>
-            <option>Pending</option>
-          </select>
-
-          <select
-            value={segment}
-            onChange={(e) =>
-              setSegment(
-                e.target.value
-              )
-            }
-            className={`px-3 py-2 rounded-xl border ${input}`}
-          >
-            <option>All</option>
-            <option>
-              Residential
-            </option>
-            <option>
-              Commercial
-            </option>
-            <option>
-              Industrial
-            </option>
-          </select>
         </div>
 
-        {/* KPI */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            [
-              "Plans",
-              filteredTariffs.length,
-              <FiDollarSign />,
-            ],
-            [
-              "Customers",
-              totalCustomers,
-              <FiUsers />,
-            ],
-            [
-              "Avg Rate",
-              `$${(
-                filteredTariffs.reduce(
-                  (
-                    a,
-                    b
-                  ) =>
-                    a +
-                    b.rate,
-                  0
-                ) /
-                filteredTariffs.length
-              ).toFixed(2)}`,
-              <FiCheckCircle />,
-            ],
-            [
-              "Revenue",
-              `$${totalRevenue}K`,
-              <FiTrendingUp />,
-            ],
-          ].map(([t, v, i], idx) => (
-            <div
-              key={idx}
-              className={`rounded-2xl border p-4 ${card}`}
-            >
-              <div className="flex justify-between">
-                <span className="text-xs text-slate-400">
-                  {t}
-                </span>
-                <span className="text-cyan-400">
-                  {i}
-                </span>
-              </div>
+        {/* HERO SUMMARY */}
 
-              <h2 className="text-2xl font-black mt-2">
-                {v}
-              </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          {[
+            {
+              label:
+                "Customers in Segment",
+              value: "320K",
+              sub: "Evening Peakers",
+              icon: <FiUsers />,
+            },
+
+            {
+              label:
+                "Recommended Tariff",
+              value: "Peak Escape",
+              sub: "AI selected",
+              icon: <FiCheckCircle />,
+            },
+
+            {
+              label:
+                "Avg Customer Savings",
+              value: "£240",
+              sub: "annual",
+              icon: <FiTrendingUp />,
+            },
+
+            {
+              label:
+                "Peak Reduction",
+              value: "-18%",
+              sub: "18:00-19:00",
+              icon: <FiActivity />,
+            },
+
+            {
+              label:
+                "Recommendation Confidence",
+              value: "92%",
+              sub: "high confidence",
+              icon: <FiTarget />,
+            },
+          ].map((item, i) => (
+            <div
+              key={i}
+              className={`rounded-3xl border p-4 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.015] before:to-transparent before:pointer-events-none ${card}`}
+            >
+              <div className="relative z-10">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                    {item.label}
+                  </p>
+
+                  <span className="text-cyan-400">
+                    {item.icon}
+                  </span>
+                </div>
+
+                <h2 className="text-2xl font-bold tracking-tight mt-3">
+                  {item.value}
+                </h2>
+
+                <p className="text-[11px] text-slate-500 mt-1">
+                  {item.sub}
+                </p>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Charts */}
-        <div className="grid lg:grid-cols-2 gap-4">
-          {/* Pie */}
-          <div
-            className={`rounded-3xl border p-4 ${card}`}
-          >
-            <h2 className="font-bold text-sm mb-4">
-              Tariff Share
-            </h2>
+        {/* MAIN LAYOUT */}
 
-            <div className="grid md:grid-cols-2 gap-4 items-center">
-              <div className="h-[280px]">
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      dataKey="value"
-                      innerRadius={58}
-                      outerRadius={92}
-                    >
-                      {pieData.map(
-                        (item, i) => (
-                          <Cell
-                            key={i}
-                            fill={item.color}
-                          />
-                        )
-                      )}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+        {/* TARIFF RECOMMENDATION ENGINE */}
 
-              <div className="space-y-2">
-                {pieData.map(
-                  (item, i) => (
-                    <div
-                      key={i}
-                      className={`flex justify-between px-3 py-2 rounded-xl ${isDark
-                          ? "bg-white/5"
-                          : "bg-slate-100"
-                        }`}
-                    >
-                      <span>
-                        {
-                          item.name
-                        }
-                      </span>
-                      <span className="text-cyan-400 font-semibold">
-                        {(
-                          (item.value /
-                            totalPie) *
-                          100
-                        ).toFixed(1)}
-                        %
-                      </span>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
+<div
+  className={`rounded-3xl border p-6 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.015] before:to-transparent before:pointer-events-none ${card}`}
+>
+  {/* GLOW */}
 
-          {/* Revenue */}
-          <div
-            className={`rounded-3xl border p-4 ${card}`}
-          >
-            <h2 className="font-bold text-sm mb-4">
-              Revenue by Tariff
-            </h2>
+  <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 blur-3xl rounded-full" />
 
-            <ResponsiveContainer
-              width="100%"
-              height={280}
+  <div className="relative z-10">
+    {/* HEADER */}
+
+    <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight">
+          Tariff Recommendation Engine
+        </h2>
+
+        <p className="text-[11px] text-slate-500 mt-1">
+          AI ranked tariffs based on customer behaviour, flexibility and supplier economics
+        </p>
+      </div>
+
+      <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] uppercase tracking-wide text-emerald-400 font-medium">
+        92% Confidence
+      </div>
+    </div>
+
+    {/* TOP SECTION */}
+
+    <div className="grid xl:grid-cols-[240px_minmax(0,1fr)_300px] gap-6 items-start">
+      {/* PROFILE */}
+
+      <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-5 h-full">
+        <h3 className="text-sm font-semibold mb-5">
+          Customer Profile
+        </h3>
+
+        <div className="space-y-4">
+          {[
+            [
+              "Segment",
+              "Evening Peakers",
+            ],
+
+            [
+              "Avg Annual Usage",
+              "7,800 kWh",
+            ],
+
+            [
+              "Peak 18:00-19:00",
+              "38%",
+            ],
+
+            [
+              "Offpeak Usage",
+              "22%",
+            ],
+
+            [
+              "Smart Meter %",
+              "91%",
+            ],
+
+            [
+              "EV Ownership",
+              "16%",
+            ],
+
+            [
+              "Solar Adoption",
+              "9%",
+            ],
+
+            [
+              "Tenure",
+              "3.2 years",
+            ],
+          ].map((item, i) => (
+            <div
+              key={i}
+              className="flex justify-between border-b border-white/5 pb-2"
             >
-              <LineChart
-                data={chartData}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  opacity={0.08}
-                />
-                <XAxis
-                  dataKey="name"
-                  fontSize={11}
-                />
-                <YAxis fontSize={11} />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#06b6d4"
-                  strokeWidth={3}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+              <span className="text-[11px] text-slate-500">
+                {item[0]}
+              </span>
+
+              <span className="text-[11px] font-medium">
+                {item[1]}
+              </span>
+            </div>
+          ))}
         </div>
 
-        {/* Small Stylish Nav */}
-        {/* Centered Stylish Nav */}
-        <div className="flex justify-center">
-          <div
-            className={`rounded-2xl border p-2 flex gap-2 w-fit ${card}`}
+        {/* MINI LOAD CURVE */}
+
+        <div className="mt-8">
+          <h4 className="text-[11px] text-slate-400 mb-3">
+            Average Daily Load
+          </h4>
+
+          <ResponsiveContainer
+            width="100%"
+            height={120}
           >
-            {[
-              {
-                label: "Residential",
-                icon: <FiHome />,
-              },
-              {
-                label: "Industrial",
-                icon: <FiTool />,
-              },
-            ].map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  setTableType(item.label);
-                  setPage(1);
-                }}
-                className={`px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-all duration-300 ${tableType === item.label
-                    ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-lg"
-                    : isDark
-                      ? "hover:bg-white/5 text-slate-300"
-                      : "hover:bg-slate-100 text-slate-700"
-                  }`}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ))}
-          </div>
+            <AreaChart
+              data={loadData}
+            >
+              <Area
+                dataKey="before"
+                stroke="#6EE7B7"
+                fill="#6EE7B7"
+                fillOpacity={0.15}
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* RECOMMENDED */}
+
+      <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.08] to-transparent p-6 h-full">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] uppercase tracking-wide text-emerald-400 font-medium">
+          <FiCheckCircle />
+          Recommended Tariff
         </div>
 
-        {/* Table BELOW charts */}
-        <div
-          className={`rounded-3xl border overflow-hidden ${card}`}
-        >
-          <div className="px-5 py-4 border-b border-white/10">
-            <h2 className="font-bold text-sm">
-              {tableType} Tariffs
-            </h2>
-          </div>
+        <h2 className="text-5xl font-bold tracking-tight mt-6">
+          Peak Escape
+        </h2>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead
-                className={
-                  isDark
-                    ? "bg-white/5"
-                    : "bg-slate-100"
-                }
-              >
-                <tr>
-                  {[
-                    [
-                      "name",
-                      "Name",
-                    ],
-                    [
-                      "rate",
-                      "Rate",
-                    ],
-                    [
-                      "customers",
-                      "Customers",
-                    ],
-                    [
-                      "status",
-                      "Status",
-                    ],
-                  ].map(
-                    ([
-                      key,
-                      label,
-                    ]) => (
-                      <th
-                        key={
-                          key
-                        }
-                        onClick={() =>
-                          sortColumn(
-                            key
-                          )
-                        }
-                        className="px-5 py-3 text-left cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2">
-                          {
-                            label
-                          }
-                          <SortIcon
-                            col={
-                              key
-                            }
-                          />
-                        </div>
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
+        <p className="text-sm text-slate-300 mt-4 leading-relaxed max-w-2xl">
+          Optimised for customers with high evening demand and strong offpeak
+          flexibility potential. Expected to reduce peak exposure while improving
+          customer savings and supplier margin profile.
+        </p>
 
-              <tbody>
-                {paginatedData.map(
-                  (
-                    item,
-                    i
-                  ) => (
-                    <tr
-                      key={i}
-                      className="border-t border-white/5 hover:bg-white/5"
-                    >
-                      <td className="px-5 py-4">
-                        {
-                          item.name
-                        }
-                      </td>
-                      <td className="px-5 py-4 text-cyan-400">
-                        $
-                        {
-                          item.rate
-                        }
-                      </td>
-                      <td className="px-5 py-4">
-                        {
-                          item.customers
-                        }
-                      </td>
-                      <td className="px-5 py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs ${item.status ===
-                              "Active"
-                              ? "bg-emerald-500/15 text-emerald-400"
-                              : "bg-amber-500/15 text-amber-400"
-                            }`}
-                        >
-                          {
-                            item.status
-                          }
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
-          </div>
+        {/* METRICS */}
 
-          <div className="px-5 py-4 border-t border-white/10 flex justify-between items-center">
-            <p className="text-xs text-slate-400">
-              Page {page} of{" "}
-              {totalPages}
-            </p>
+        <div className="grid grid-cols-3 gap-4 mt-8">
+          {[
+            [
+              "Annual Bill",
+              "£1,180",
+            ],
 
-            <div className="flex gap-2">
-              <button
-                onClick={() =>
-                  setPage((p) =>
-                    Math.max(
-                      1,
-                      p - 1
-                    )
-                  )
-                }
-                className="w-9 h-9 rounded-xl border flex items-center justify-center"
-              >
-                <FiChevronLeft />
-              </button>
+            [
+              "Customer Savings",
+              "£240",
+            ],
 
-              <button
-                onClick={() =>
-                  setPage((p) =>
-                    Math.min(
-                      totalPages,
-                      p + 1
-                    )
-                  )
-                }
-                className="w-9 h-9 rounded-xl border flex items-center justify-center"
-              >
-                <FiChevronRight />
-              </button>
+            [
+              "Peak Reduction",
+              "-18%",
+            ],
+          ].map((item, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-white/5 bg-white/[0.04] p-4"
+            >
+              <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                {item[0]}
+              </p>
+
+              <h3 className="text-3xl font-bold mt-2">
+                {item[1]}
+              </h3>
             </div>
-          </div>
+          ))}
         </div>
-        {/* DRILL DOWN SECTION */}
-        <div className="grid lg:grid-cols-3 gap-4 mt-4">
-          {/* Usage Breakdown */}
-          <div className={`rounded-3xl border p-5 ${card}`}>
-            <h3 className="text-sm font-bold mb-4 uppercase tracking-wide">
-              Usage Breakdown
-            </h3>
+      </div>
 
-            {[
-              { label: "Peak Hours", value: 52 },
-              { label: "Off-Peak", value: 31 },
-              { label: "Night Load", value: 17 },
-            ].map((item, i) => (
-              <div key={i} className="mb-4">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-400">
-                    {item.label}
-                  </span>
-                  <span className="font-semibold text-cyan-400">
-                    {item.value}%
-                  </span>
-                </div>
+      {/* WHY PANEL */}
 
-                <div className="h-2 rounded-full bg-slate-800">
-                  <div
-                    className="h-2 rounded-full bg-gradient-to-r from-cyan-500 to-purple-600"
-                    style={{ width: `${item.value}%` }}
-                  />
-                </div>
+      <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-5 h-full">
+        <h3 className="text-sm font-semibold text-emerald-400">
+          Why this recommendation?
+        </h3>
+
+        <div className="space-y-4 mt-6">
+          {[
+            "High evening peak demand behaviour",
+            "Strong offpeak shifting potential",
+            "91% smart meter penetration",
+            "Improves supplier economics",
+            "High engagement suitability",
+          ].map((item, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-3"
+            >
+              <div className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {item}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <button className="w-full mt-8 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 transition-all text-white text-sm font-medium flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+          Apply Recommendation
+          <FiArrowRight />
+        </button>
+      </div>
+    </div>
+
+    {/* ALTERNATIVE TARIFFS */}
+
+    <div className="mt-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-sm font-semibold">
+            Alternative Tariffs
+          </h3>
+
+          <p className="text-[11px] text-slate-500 mt-1">
+            Ranked by suitability score and expected customer impact
+          </p>
+        </div>
+      </div>
+
+      <div className="grid xl:grid-cols-4 gap-4">
+        {[
+          {
+            name: "EV Smart",
+            annual: "£1,210",
+            savings: "£210",
+            score: "88%",
+          },
+
+          {
+            name: "Time of Use",
+            annual: "£1,250",
+            savings: "£170",
+            score: "81%",
+          },
+
+          {
+            name: "Green Saver",
+            annual: "£1,360",
+            savings: "£60",
+            score: "74%",
+          },
+
+          {
+            name: "Weekend Flex",
+            annual: "£1,290",
+            savings: "£130",
+            score: "77%",
+          },
+        ].map((item, i) => (
+          <div
+            key={i}
+            className="rounded-3xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 p-5 hover:-translate-y-[2px]"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">
+                {item.name}
+              </h3>
+
+              <div className="text-[10px] text-cyan-400 font-medium">
+                {item.score}
               </div>
-            ))}
-          </div>
+            </div>
 
-         
-          {/* <div className={`rounded-3xl border p-5 ${card}`}>
-            <h3 className="text-sm font-bold mb-4 uppercase tracking-wide">
-              Avg Monthly Bill
-            </h3>
+            <div className="mt-6">
+              <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                Annual Bill
+              </p>
 
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-slate-400 text-sm">
-                  Energy Cost
+              <h2 className="text-3xl font-bold mt-2">
+                {item.annual}
+              </h2>
+            </div>
+
+            <div className="mt-6">
+              <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                Potential Savings
+              </p>
+
+              <div className="text-xl font-semibold text-cyan-400 mt-2">
+                {item.savings}
+              </div>
+            </div>
+
+            {/* SUITABILITY */}
+
+            <div className="mt-6">
+              <div className="flex justify-between text-[10px] text-slate-500 mb-2">
+                <span>
+                  Suitability
                 </span>
-                <span className="font-semibold text-cyan-400">
-                  $120
+
+                <span>
+                  {item.score}
                 </span>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-slate-400 text-sm">
-                  Taxes & Fees
-                </span>
-                <span className="font-semibold">
-                  $18
-                </span>
-              </div>
-
-              <div className="border-t border-white/10 pt-3 flex justify-between">
-                <span className="font-semibold">
-                  Total
-                </span>
-                <span className="font-bold text-lg text-cyan-400">
-                  $138
-                </span>
+              <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500"
+                  style={{
+                    width:
+                      item.score,
+                  }}
+                />
               </div>
             </div>
           </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
 
-          
-          <div className={`rounded-3xl border p-5 ${card}`}>
-            <h3 className="text-sm font-bold mb-4 uppercase tracking-wide">
-              Segment Insights
-            </h3>
+{/* LOWER SECTION */}
 
-            {tableType === "Residential" ? (
-              <div className="space-y-3 text-sm">
-                <p className="text-slate-400">
-                  • Higher usage during evening peak hours
-                </p>
-                <p className="text-slate-400">
-                  • Strong adoption of green tariffs
-                </p>
-                <p className="text-slate-400">
-                  • Avg consumption stable month-on-month
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3 text-sm">
-                <p className="text-slate-400">
-                  • High load consistency across hours
-                </p>
-                <p className="text-slate-400">
-                  • Lower cost tariffs preferred
-                </p>
-                <p className="text-slate-400">
-                  • Significant bulk consumption savings
-                </p>
-              </div>
-            )}
-          </div> */}
+<div className="grid xl:grid-cols-[1.4fr_0.8fr] gap-4 mt-4">
+  {/* LOAD SHAPE */}
+
+  <div
+    className={`rounded-3xl border p-5 ${card}`}
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div>
+        <h3 className="text-sm font-semibold">
+          Load Shape Impact
+        </h3>
+
+        <p className="text-[11px] text-slate-500 mt-1">
+          Before vs after tariff migration
+        </p>
+      </div>
+
+      <div className="text-xs text-emerald-400 font-medium">
+        -18% Peak
+      </div>
+    </div>
+
+    <ResponsiveContainer
+      width="100%"
+      height={250}
+    >
+      <LineChart
+        data={loadData}
+      >
+        <CartesianGrid
+          opacity={0.05}
+        />
+
+        <XAxis
+          dataKey="time"
+          tick={{
+            fill: "#94A3B8",
+            fontSize: 11,
+          }}
+          axisLine={false}
+          tickLine={false}
+        />
+
+        <YAxis
+          tick={{
+            fill: "#94A3B8",
+            fontSize: 11,
+          }}
+          axisLine={false}
+          tickLine={false}
+        />
+
+        <Tooltip
+          content={tooltip}
+        />
+
+        <Line
+          dataKey="before"
+          stroke="#94A3B8"
+          strokeWidth={2.2}
+          dot={false}
+        />
+
+        <Line
+          dataKey="after"
+          stroke="#6EE7B7"
+          strokeWidth={3}
+          dot={false}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+
+  {/* FINANCIAL IMPACT */}
+
+  <div
+    className={`rounded-3xl border p-5 ${card}`}
+  >
+    <div>
+      <h3 className="text-sm font-semibold">
+        Financial Impact
+      </h3>
+
+      <p className="text-[11px] text-slate-500 mt-1">
+        Portfolio and supplier economics
+      </p>
+    </div>
+
+    <div className="space-y-6 mt-8">
+      {[
+        {
+          label:
+            "Supplier Margin",
+          value: "+£52",
+          width: "88%",
+          color:
+            "from-emerald-400 to-emerald-500",
+        },
+
+        {
+          label:
+            "Peak Reduction",
+          value: "-18%",
+          width: "72%",
+          color:
+            "from-cyan-400 to-cyan-500",
+        },
+
+        {
+          label:
+            "Imbalance Cost",
+          value: "-£18",
+          width: "64%",
+          color:
+            "from-indigo-400 to-indigo-500",
+        },
+
+        {
+          label:
+            "Carbon Reduction",
+          value: "-12%",
+          width: "58%",
+          color:
+            "from-pink-400 to-violet-400",
+        },
+      ].map((item, i) => (
+        <div key={i}>
+          <div className="flex justify-between mb-2">
+            <span className="text-xs text-slate-400">
+              {item.label}
+            </span>
+
+            <span className="text-sm font-semibold">
+              {item.value}
+            </span>
+          </div>
+
+          <div className="h-2.5 rounded-full bg-slate-800/80 overflow-hidden">
+            <div
+              className={`h-full bg-gradient-to-r ${item.color} rounded-full`}
+              style={{
+                width:
+                  item.width,
+              }}
+            />
+          </div>
         </div>
+      ))}
+    </div>
+
+    {/* SUMMARY */}
+
+    <div className="mt-8 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+          <FiTrendingUp />
+        </div>
+
+        <div>
+          <h4 className="text-sm font-medium">
+            Portfolio Outcome
+          </h4>
+
+          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+            Estimated annual savings of{" "}
+            <span className="text-emerald-400 font-medium">
+              £2.1M
+            </span>{" "}
+            across the target segment with reduced evening peak exposure and improved supplier margin efficiency.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{/* ACTION BAR */}
+
+<div
+  className={`rounded-3xl border px-5 py-4 mt-4 ${card}`}
+>
+  <div className="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <p className="text-xs text-slate-500 uppercase tracking-wide">
+        Recommendation Summary
+      </p>
+
+      <h3 className="text-lg font-semibold mt-1">
+        Peak Escape expected to deliver
+        <span className="text-emerald-400">
+          {" "}
+          £240/customer annual savings
+        </span>
+      </h3>
+
+      <p className="text-[11px] text-slate-500 mt-1">
+        Based on customer flexibility, peak demand behaviour and smart meter penetration
+      </p>
+    </div>
+
+    <div className="flex items-center gap-3">
+      <button className="px-5 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all text-sm font-medium">
+        Simulate Portfolio
+      </button>
+
+      <button className="px-5 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all text-sm font-medium">
+        Export Recommendation
+      </button>
+
+      <button className="px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 transition-all text-white text-sm font-medium flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+        Apply Recommendation
+        <FiArrowRight />
+      </button>
+    </div>
+  </div>
+</div>
       </div>
     </div>
   );
