@@ -132,7 +132,7 @@ export default function Navbar({
       <aside
         className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 border-r ${
           isSidebarOpen
-            ? "w-[240px]"
+            ? "w-[220px]"
             : "w-[78px]"
         } ${
           isDark
