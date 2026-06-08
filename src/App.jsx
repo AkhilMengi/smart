@@ -1,43 +1,30 @@
-import { useState, useEffect } from 'react'
-import Login from './components/Login'
-import Dashboard from './components/Dashboard'
-import './App.css'
+import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isDark, setIsDark] = useState(true)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    // Check if user is already logged in
-    const loggedIn = localStorage.getItem('isLoggedIn')
-    if (loggedIn) {
-      setIsLoggedIn(true)
-    }
-    setIsLoading(false)
-  }, [])
-
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true)
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    )
-  }
-
+export default function App() {
   return (
-    <div className={isDark ? 'dark' : 'light'}>
-      {isLoggedIn ? (
-        <Dashboard isDark={isDark} setIsDark={setIsDark} />
-      ) : (
-        <Login onLoginSuccess={handleLoginSuccess} isDark={isDark} setIsDark={setIsDark} />
-      )}
-    </div>
-  )
-}
+    <div className="flex h-screen bg-slate-50">
+      
+      {/* SIDEBAR */}
+      <Sidebar />
 
-export default App
+      {/* MAIN */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        
+        {/* HEADER */}
+        <Header />
+
+        {/* CONTENT */}
+        <main className="flex-1 overflow-y-auto p-6">
+          
+          <div className="bg-white rounded-2xl h-full border border-slate-200 p-6">
+            <h1 className="text-2xl font-semibold text-slate-800">
+              Dashboard Content
+            </h1>
+          </div>
+
+        </main>
+      </div>
+    </div>
+  );
+}
