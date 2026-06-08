@@ -5,8 +5,6 @@ import {
   CheckCircle2,
   Workflow,
   Database,
-  Boxes,
-  Eye,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -16,22 +14,22 @@ const sections = [
     title: "INTELLIGENCE",
     items: [
       {
-        id: 1,
+        id: "account",
         label: "Account 360",
         icon: LayoutGrid,
       },
       {
-        id: 2,
+        id: "diagnosis",
         label: "Diagnosis",
         icon: Activity,
       },
       {
-        id: 3,
+        id: "resolution",
         label: "Resolution",
         icon: CheckCircle2,
       },
       {
-        id: 4,
+        id: "orchestra",
         label: "Orchestra",
         icon: Workflow,
       },
@@ -42,7 +40,7 @@ const sections = [
     title: "SYSTEMS",
     items: [
       {
-        id: 5,
+        id: "billing",
         label: "Billing",
         icon: Database,
       },
@@ -51,9 +49,24 @@ const sections = [
   },
 ];
 
-export default function Sidebar() {
-  const [active, setActive] = useState(1);
+export default function Sidebar({
+  active,
+  setActive,
+}) {
+  const [localActive, setLocalActive] =
+    useState("account");
   const [collapsed, setCollapsed] = useState(false);
+
+  const activeValue = active ?? localActive;
+
+  const handleSetActive = (id) => {
+    if (typeof setActive === "function") {
+      setActive(id);
+      return;
+    }
+
+    setLocalActive(id);
+  };
 
   return (
     <aside
@@ -221,12 +234,15 @@ export default function Sidebar() {
             <div className="space-y-1">
               {section.items.map((item) => {
                 const Icon = item.icon;
-                const isActive = active === item.id;
+                const isActive =
+                  activeValue === item.id;
 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setActive(item.id)}
+                    onClick={() =>
+                      handleSetActive(item.id)
+                    }
                     className={`
                       relative
                       w-full

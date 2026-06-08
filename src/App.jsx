@@ -1,12 +1,35 @@
-import Sidebar from "./components/Sidebar";
+import { useState } from "react";
+
+import Sidebar from "./components/SideBar";
 import Header from "./components/Header";
 
+import HistogramChart from "./components/HistogramChart";
+import ScenarioSimulator from "./components/DataSimulation";
+import CustomerSegments from "./components/CustomerSegment";
+import DataIngestion from "./components/DataIngestion";
+import BillingCard from "./components/BillingCard";
+
 export default function App() {
+  const [activeScreen, setActiveScreen] =
+    useState("account");
+
+  // SCREEN RENDERING
+  const screens = {
+    account: <HistogramChart />,
+    diagnosis: <ScenarioSimulator />,
+    resolution: <CustomerSegments isDark />,
+    orchestra: <DataIngestion isDark />,
+    billing: <BillingCard isDark />,
+  };
+
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen bg-slate-100 overflow-hidden">
       
       {/* SIDEBAR */}
-      <Sidebar />
+      <Sidebar
+        active={activeScreen}
+        setActive={setActiveScreen}
+      />
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -14,15 +37,11 @@ export default function App() {
         {/* HEADER */}
         <Header />
 
-        {/* CONTENT */}
-        <main className="flex-1 overflow-y-auto p-6">
-          
-          <div className="bg-white rounded-2xl h-full border border-slate-200 p-6">
-            <h1 className="text-2xl font-semibold text-slate-800">
-              Dashboard Content
-            </h1>
-          </div>
-
+        {/* PAGE CONTENT */}
+        <main className="flex-1 overflow-y-auto p-5">
+          {screens[activeScreen] ?? (
+            <HistogramChart />
+          )}
         </main>
       </div>
     </div>
