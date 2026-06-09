@@ -8,6 +8,7 @@ import ScenarioSimulator from "./components/DataSimulation";
 import CustomerSegments from "./components/CustomerSegment";
 import DataIngestion from "./components/DataIngestion";
 import BillingCard from "./components/BillingCard";
+import AgentOrchestra from "./components/Dummy";
 
 export default function App() {
   const [activeScreen, setActiveScreen] =
@@ -18,7 +19,7 @@ export default function App() {
     account: <HistogramChart />,
     diagnosis: <ScenarioSimulator />,
     resolution: <CustomerSegments isDark />,
-    orchestra: <DataIngestion isDark />,
+    orchestra: <AgentOrchestra />,
     billing: <BillingCard isDark />,
   };
 
