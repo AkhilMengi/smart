@@ -1,350 +1,382 @@
+
 import { useEffect, useRef, useState } from "react";
 
-const STREAM_URL = "http://localhost:8000/api/v1/analyze-stream";
+const STREAM_URL =
+  "http://localhost:8000/api/v1/analyze-stream";
 
-function nowWithMs() {
-  const d = new Date();
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  const ss = String(d.getSeconds()).padStart(2, "0");
-  const ms = String(d.getMilliseconds()).padStart(3, "0");
-  return `${hh}:${mm}:${ss}.${ms}`;
-}
+const DEFAULT_PAYLOAD = {
+  CN: 456,
+  case_type: "Metering",
+  case_category: "Fault",
+};
 
-function stageTone(stage) {
-  switch (stage) {
-    case "start":
-      return "text-blue-600";
-    case "validated":
-    case "progress":
-      return "text-amber-600";
-    case "complete":
-      return "text-emerald-600";
-    case "error":
-      return "text-rose-600";
-    case "system":
-      return "text-sky-600";
-    default:
-      return "text-slate-600";
-  }
-}
-
-function logBgColor(stage) {
-  switch (stage) {
-    case "start":
-      return "bg-blue-50 border-blue-200";
-    case "validated":
-    case "progress":
-      return "bg-amber-50 border-amber-200";
-    case "complete":
-      return "bg-emerald-50 border-emerald-200";
-    case "error":
-      return "bg-rose-50 border-rose-200";
-    case "system":
-      return "bg-sky-50 border-sky-200";
-    default:
-      return "bg-slate-50 border-slate-200";
-  }
-}
-
-export default function StreamLogs() {
+export default function AgentStreamUI() {
   const [logs, setLogs] = useState([]);
-  const [status, setStatus] = useState("IDLE");
-  const [eventCount, setEventCount] = useState(0);
-  const [validationOutput, setValidationOutput] = useState(null);
-  const [decisionOutput, setDecisionOutput] = useState(null);
+  const [status, setStatus] = useState("standby");
 
+  const [validationStatus, setValidationStatus] =
+    useState("IDLE");
+
+  const [decisionStatus, setDecisionStatus] =
+    useState("IDLE");
+
+  const [validationOutput, setValidationOutput] =
+    useState(null);
+
+  const [decisionOutput, setDecisionOutput] =
+    useState(null);
+
+  const logRef = useRef(null);
   const controllerRef = useRef(null);
-  const pendingClockRef = useRef(null);
-  const logEndRef = useRef(null);
 
-  const addLog = (type, message, clockValue) => {
+  const addLog = (type, message) => {
     setLogs((prev) => [
       ...prev,
       {
         id: Date.now() + Math.random(),
-        time: clockValue || nowWithMs(),
+        time: new Date().toLocaleTimeString(),
         type,
         message,
       },
     ]);
-    setEventCount((c) => c + 1);
-  };
-
-  const connect = async () => {
-    if (controllerRef.current) {
-      controllerRef.current.abort();
-    }
-
-    setLogs([]);
-    setEventCount(0);
-    setStatus("CONNECTING");
-    setValidationOutput(null);
-    setDecisionOutput(null);
-    pendingClockRef.current = null;
-
-    try {
-      const controller = new AbortController();
-      controllerRef.current = controller;
-
-      const response = await fetch(STREAM_URL, {
-        method: "GET",
-        headers: {
-          Accept: "text/event-stream, application/json",
-        },
-        signal: controller.signal,
-      });
-
-      if (!response.ok || !response.body) {
-        throw new Error(`Stream request failed: ${response.status}`);
-      }
-
-      setStatus("CONNECTED");
-      addLog("system", "Connected to stream");
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split(/\r?\n/);
-        buffer = lines.pop() || "";
-
-        for (let line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed === "**") continue;
-
-          if (/^\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?$/.test(trimmed)) {
-            pendingClockRef.current = trimmed;
-            continue;
-          }
-
-          let content = trimmed;
-          if (content.startsWith("data:")) {
-            content = content.replace("data:", "").trim();
-          }
-
-          const entryClock = pendingClockRef.current || nowWithMs();
-
-          try {
-            const json = JSON.parse(content);
-            const stage = String(json.stage || "event").toLowerCase();
-            addLog(stage, JSON.stringify(json, null, 2), entryClock);
-
-            // Capture validation and decision outputs
-            if (stage === "validated") {
-              setValidationOutput(json.result || json);
-            } else if (stage === "complete") {
-              setDecisionOutput(json.result || json);
-              setStatus("COMPLETE");
-            } else if (stage === "error") {
-              setStatus("ERROR");
-            }
-          } catch {
-            addLog("log", content, entryClock);
-            if (content.toLowerCase().includes("connection closed")) {
-              setStatus((prev) => (prev === "COMPLETE" ? prev : "CLOSED"));
-            }
-          }
-
-          pendingClockRef.current = null;
-        }
-      }
-
-      addLog("system", "Stream closed");
-      setStatus((prev) => (prev === "COMPLETE" ? prev : "CLOSED"));
-    } catch (err) {
-      if (err.name === "AbortError") return;
-
-      addLog("error", err.message || "Stream error");
-      setStatus("ERROR");
-    }
   };
 
   useEffect(() => {
     connect();
 
     return () => {
-      if (controllerRef.current) {
-        controllerRef.current.abort();
-      }
+      controllerRef.current?.abort();
     };
   }, []);
 
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    logRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
   }, [logs]);
 
-  const statusColor = {
-    IDLE: "bg-slate-100 text-slate-700 border-slate-300",
-    CONNECTING: "bg-amber-100 text-amber-700 border-amber-300",
-    CONNECTED: "bg-emerald-100 text-emerald-700 border-emerald-300",
-    COMPLETE: "bg-blue-100 text-blue-700 border-blue-300",
-    CLOSED: "bg-slate-100 text-slate-700 border-slate-300",
-    ERROR: "bg-rose-100 text-rose-700 border-rose-300",
+  const connect = async () => {
+    try {
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+      }
+
+      setLogs([]);
+      setStatus("connecting");
+
+      setValidationStatus("RUNNING");
+      setDecisionStatus("IDLE");
+
+      const controller = new AbortController();
+
+      controllerRef.current = controller;
+
+      addLog(
+        "system",
+        `Connected to ${STREAM_URL}`
+      );
+
+      const response = await fetch(STREAM_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+        },
+        body: JSON.stringify(DEFAULT_PAYLOAD),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed with ${response.status}`
+        );
+      }
+
+      setStatus("connected");
+
+      const reader = response.body.getReader();
+
+      const decoder = new TextDecoder();
+
+      let buffer = "";
+
+      while (true) {
+        const { value, done } =
+          await reader.read();
+
+        if (done) break;
+
+        buffer += decoder.decode(value, {
+          stream: true,
+        });
+
+        const lines = buffer.split("\n");
+
+        buffer = lines.pop();
+
+        for (let line of lines) {
+          line = line.trim();
+
+          if (!line) continue;
+
+          if (line.startsWith("data:")) {
+            line = line.replace("data:", "");
+          }
+
+          try {
+            const json = JSON.parse(line);
+
+            addLog(
+              json.stage || "event",
+              JSON.stringify(json, null, 2)
+            );
+
+            if (
+              json.stage === "validated"
+            ) {
+              setValidationStatus(
+                "COMPLETE"
+              );
+
+              setDecisionStatus(
+                "RUNNING"
+              );
+
+              setValidationOutput(
+                json.result || json
+              );
+            }
+
+            if (
+              json.stage === "complete"
+            ) {
+              setDecisionStatus(
+                "COMPLETE"
+              );
+
+              setDecisionOutput(
+                json.result || json
+              );
+
+              setStatus("complete");
+            }
+          } catch {
+            addLog("log", line);
+
+            if (
+              line
+                .toLowerCase()
+                .includes("closed")
+            ) {
+              setStatus("closed");
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+
+      addLog("error", err.message);
+
+      setStatus("error");
+    }
+  };
+
+  const statusStyle = (value) => {
+    switch (value) {
+      case "RUNNING":
+        return "text-amber-400";
+
+      case "COMPLETE":
+        return "text-green-400";
+
+      default:
+        return "text-slate-400";
+    }
   };
 
   return (
-    <div className="min-h-full bg-white">
-      <main className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
-        <section className="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">Stream Logs</h1>
-              <p className="mt-2 text-sm text-slate-600">
-                Real-time agent analysis logs and events
-              </p>
-            </div>
+    <div className="min-h-screen bg-[#f4f6fb]">
+      {/* TOP NAV */}
+      <div className="h-16 bg-[#151927] border-b border-[#2a3147] flex items-center justify-between px-6">
+        <div>
+          <p className="text-[10px] tracking-[4px] uppercase text-orange-300">
+            Multi-Agent Orchestration
+          </p>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                  statusColor[status] || statusColor.IDLE
-                }`}
-              >
-                {status}
-              </span>
+          <h1 className="text-white text-xl font-semibold mt-1">
+            Agent Orchestra
+          </h1>
+        </div>
 
-              <button
-                onClick={connect}
-                className="rounded-full border-2 border-slate-900 bg-slate-900 px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800 hover:shadow-lg active:shadow-sm"
-              >
-                Run Stream
-              </button>
-            </div>
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-slate-300">
+            Stream Status
           </div>
 
-          <div className="mt-6 flex gap-4 flex-wrap">
-            <div className="rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Total Events
-              </p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{eventCount}</p>
-            </div>
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-2.5 h-2.5 rounded-full ${
+                status === "connected"
+                  ? "bg-green-500"
+                  : status === "connecting"
+                  ? "bg-yellow-500"
+                  : status === "complete"
+                  ? "bg-cyan-500"
+                  : "bg-slate-500"
+              }`}
+            />
 
-            <div className="rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Logs Collected
-              </p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{logs.length}</p>
-            </div>
+            <span className="text-sm text-white capitalize">
+              {status}
+            </span>
           </div>
-        </section>
+        </div>
+      </div>
 
-        <section className="mt-6">
-          <div className="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-xl font-bold text-slate-900">Live Transcript</h2>
+      {/* BODY */}
+      <div className="p-6">
+        {/* DESCRIPTION */}
+        <div className="mb-8">
+          <p className="text-slate-500 max-w-4xl">
+            Validation agent verifies the incoming case payload.
+            Decision agent generates the final classification and routing outcome.
+          </p>
+        </div>
 
-            <div className="max-h-[70vh] space-y-3 overflow-y-auto rounded-xl border-2 border-slate-200 bg-slate-50 p-4">
-              {logs.length === 0 ? (
-                <div className="flex h-40 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 text-center">
-                  <p className="text-sm text-slate-500">
-                    Click "Run Stream" to start collecting logs...
-                  </p>
+        {/* AGENTS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+          {/* VALIDATION */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
+                  VA
                 </div>
-              ) : (
-                logs.map((log) => (
-                  <div
-                    key={log.id}
-                    className={`overflow-hidden rounded-lg border-2 ${logBgColor(log.type)}`}
-                  >
-                    <div className="flex items-center justify-between border-b-2 border-current border-opacity-20 px-4 py-2 text-xs">
-                      <span className="font-mono text-slate-600">{log.time}</span>
-                      <span
-                        className={`font-bold uppercase ${stageTone(log.type)}`}
-                      >
+
+                <h2 className="mt-5 text-xl font-semibold text-slate-800">
+                  Validation Agent
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1">
+                  Validates incoming payload and schema.
+                </p>
+              </div>
+
+              <div
+                className={`text-xs font-semibold tracking-[2px] ${statusStyle(
+                  validationStatus
+                )}`}
+              >
+                {validationStatus}
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-2xl bg-slate-50 p-4 h-[180px] overflow-auto">
+              <pre className="text-xs text-slate-700 whitespace-pre-wrap">
+                {validationOutput
+                  ? JSON.stringify(
+                      validationOutput,
+                      null,
+                      2
+                    )
+                  : "Awaiting validation output..."}
+              </pre>
+            </div>
+          </div>
+
+          {/* DECISION */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center text-white font-bold text-xl">
+                  DA
+                </div>
+
+                <h2 className="mt-5 text-xl font-semibold text-slate-800">
+                  Decision Agent
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1">
+                  Produces final routing and decision output.
+                </p>
+              </div>
+
+              <div
+                className={`text-xs font-semibold tracking-[2px] ${statusStyle(
+                  decisionStatus
+                )}`}
+              >
+                {decisionStatus}
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-2xl bg-slate-50 p-4 h-[180px] overflow-auto">
+              <pre className="text-xs text-slate-700 whitespace-pre-wrap">
+                {decisionOutput
+                  ? JSON.stringify(
+                      decisionOutput,
+                      null,
+                      2
+                    )
+                  : "Awaiting decision output..."}
+              </pre>
+            </div>
+          </div>
+        </div>
+
+        {/* MESSAGE BUS */}
+        <div className="bg-[#060b17] rounded-3xl overflow-hidden border border-[#1c2233] shadow-2xl">
+          {/* TOP */}
+          <div className="h-14 border-b border-[#1c2233] px-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+
+              <h2 className="text-white font-semibold text-lg">
+                Agent Message Bus
+              </h2>
+            </div>
+
+            <button
+              onClick={connect}
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm text-white"
+            >
+              Reconnect
+            </button>
+          </div>
+
+          {/* LOGS */}
+          <div className="h-[500px] overflow-auto p-5 bg-gradient-to-b from-[#050816] to-[#02040d] font-mono">
+            <div className="space-y-4">
+              {logs.map((log) => (
+                <div
+                  key={log.id}
+                  className="border border-slate-800 rounded-2xl overflow-hidden bg-white/[0.03]"
+                >
+                  <div className="px-4 py-2 border-b border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500">
+                        {log.time}
+                      </span>
+
+                      <span className="text-xs uppercase tracking-[2px] text-cyan-400">
                         {log.type}
                       </span>
                     </div>
-
-                    <pre className="overflow-x-auto whitespace-pre-wrap break-words px-4 py-3 font-mono text-xs leading-relaxed text-slate-700">
-                      {log.message}
-                    </pre>
                   </div>
-                ))
-              )}
 
-              <div ref={logEndRef} />
+                  <pre className="p-4 text-sm text-green-400 whitespace-pre-wrap break-words overflow-auto leading-7">
+                    {log.message}
+                  </pre>
+                </div>
+              ))}
+
+              <div ref={logRef} />
             </div>
           </div>
-        </section>
-
-        {(validationOutput || decisionOutput) && (
-          <section className="mt-6">
-            <div className="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-6 text-xl font-bold text-slate-900">Agent Decisions</h2>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                {validationOutput && (
-                  <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-blue-600" />
-                      <h3 className="font-bold text-blue-900">Validation Agent</h3>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      {typeof validationOutput === "object" &&
-                      validationOutput !== null ? (
-                        Object.entries(validationOutput).map(([key, val]) => (
-                          <div
-                            key={key}
-                            className="flex justify-between rounded-lg bg-white px-3 py-2"
-                          >
-                            <span className="font-semibold text-slate-600">{key}:</span>
-                            <span className="text-slate-900">
-                              {typeof val === "object"
-                                ? JSON.stringify(val)
-                                : String(val)}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <pre className="overflow-x-auto rounded bg-white p-2 font-mono text-xs text-slate-700">
-                          {JSON.stringify(validationOutput, null, 2)}
-                        </pre>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {decisionOutput && (
-                  <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-emerald-600" />
-                      <h3 className="font-bold text-emerald-900">Decision Agent</h3>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      {typeof decisionOutput === "object" &&
-                      decisionOutput !== null ? (
-                        Object.entries(decisionOutput).map(([key, val]) => (
-                          <div
-                            key={key}
-                            className="flex justify-between rounded-lg bg-white px-3 py-2"
-                          >
-                            <span className="font-semibold text-slate-600">{key}:</span>
-                            <span className="text-slate-900">
-                              {typeof val === "object"
-                                ? JSON.stringify(val)
-                                : String(val)}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <pre className="overflow-x-auto rounded bg-white p-2 font-mono text-xs text-slate-700">
-                          {JSON.stringify(decisionOutput, null, 2)}
-                        </pre>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-      </main>
+        </div>
+      </div>
     </div>
   );
 }
+
